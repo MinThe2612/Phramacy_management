@@ -1,0 +1,188 @@
+DESIGN DOCUMENT: PHARMACY MANAGEMENT SYSTEM (C++)
+
+1. Tổng quan dự án
+
+Tên dự án: C++ Pharmacy Manager (CPM)
+
+Mục tiêu: Quản lý kho thuốc, vật tư y tế, theo dõi hạn sử dụng và thực hiện giao dịch bán lẻ.
+
+Công nghệ: C++ (Standard 17+), SQLite 3.
+
+Giao diện: Console UI với ANSI Escape Codes (Màu sắc).
+
+2. Kiến trúc Hệ thống (OOP Focus)
+
+Chúng ta sẽ áp dụng 4 tính chất cơ bản của OOP như sau:
+
+Tính đóng gói (Encapsulation): Các thuộc tính của sản phẩm được để ở protected/private, truy cập qua các hàm getter/setter.
+
+Tính kế thừa (Inheritance): Lớp cơ sở Product và các lớp con Medicine (Thuốc), MedicalSupply (Vật tư).
+
+Tính đa hình (Polymorphism): Sử dụng hàm ảo display() và getType() để xử lý danh sách sản phẩm tổng quát.
+
+Tính trừu tượng (Abstraction): Lớp Product sẽ là lớp cơ sở trừu tượng (Abstract Class).
+
+2.1. Sơ đồ lớp (Class Hierarchy)
+
+Class Product (Abstract Base Class)
+
+string id, name
+
+double price
+
+int quantity
+
+string expiryDate (Định dạng YYYY-MM-DD để dễ so sánh trong SQLite)
+
+virtual void display() = 0; (Pure virtual function)
+
+Class Medicine (Inherits from Product)
+
+string activeIngredient (Hoạt chất)
+
+string dosage (Liều dùng)
+
+void display() (Override)
+
+Class MedicalSupply (Inherits from Product)
+
+string unit (Đơn vị tính: Cái, Bộ, Máy)
+
+void display() (Override)
+
+Class PharmacyManager (Controller)
+
+Quản lý kết nối SQLite.
+
+Chứa các phương thức CRUD (Thêm, Xóa, Sửa, Liệt kê).
+
+Logic kiểm tra thuốc hết hạn.
+
+3. Thiết kế Cơ sở dữ liệu (SQLite)
+
+Chỉ cần 1 bảng duy nhất để quản lý tất cả sản phẩm (vì quy mô đồ án nhỏ), sử dụng một cột type để phân biệt.
+
+Bảng: Products
+
+Column
+
+Type
+
+Description
+
+id
+
+TEXT (PK)
+
+Mã sản phẩm (ví dụ: T001, V001)
+
+name
+
+TEXT
+
+Tên sản phẩm
+
+price
+
+REAL
+
+Giá bán
+
+quantity
+
+INTEGER
+
+Số lượng tồn kho
+
+expiry_date
+
+TEXT
+
+Hạn sử dụng (YYYY-MM-DD)
+
+type
+
+INTEGER
+
+1: Medicine, 2: Supply
+
+ingredient
+
+TEXT
+
+Hoạt chất (chỉ cho Medicine)
+
+dosage
+
+TEXT
+
+Liều dùng (chỉ cho Medicine)
+
+unit
+
+TEXT
+
+Đơn vị (chỉ cho Supply)
+
+4. Các tính năng chính
+
+Quản lý sản phẩm: -   Thêm mới Thuốc/Vật tư.
+
+Cập nhật số lượng (nhập kho thêm).
+
+Xóa sản phẩm.
+
+Tìm kiếm & Lọc:
+
+Tìm theo tên hoặc ID.
+
+Lọc danh sách thuốc sắp hết hạn (trong vòng 30 ngày so với ngày hệ thống).
+
+Bán hàng đơn giản:
+
+Chọn ID sản phẩm -> Nhập số lượng -> Trừ kho -> In "hóa đơn" ra màn hình.
+
+Báo cáo kho:
+
+Hiển thị danh sách dưới dạng bảng có màu sắc.
+
+5. Giao diện người dùng (Console UI)
+
+Sử dụng mã màu ANSI để làm nổi bật:
+
+Menu: Màu xanh dương (Cyan).
+
+Thông báo thành công: Màu xanh lá (Green).
+
+Cảnh báo hết hạn/Lỗi: Màu đỏ (Red).
+
+Tiêu đề bảng: Màu vàng (Yellow).
+
+Ví dụ mã màu trong C++:
+
+#define RESET   "\033[0m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define CYAN    "\033[36m"
+
+
+6. Kế hoạch thực hiện (Phân rã module)
+
+Giai đoạn 1: Xây dựng cấu trúc lớp (Core OOP) và định nghĩa các hàm ảo.
+
+Giai đoạn 2: Tích hợp SQLite. Viết class DatabaseHandler để mở/đóng kết nối và thực thi câu lệnh SQL.
+
+Giai đoạn 3: Xây dựng class PharmacyManager điều hướng giữa UI và Database.
+
+Giai đoạn 4: Viết logic xử lý Date-time (dùng thư viện <chrono> hoặc <ctime>) để so sánh hạn sử dụng.
+
+Giai đoạn 5: Trang trí UI và fix bug.
+
+7. Phản biện & Lưu ý cho sinh viên
+
+Vấn đề ID: Nên tự động tạo ID hoặc kiểm tra trùng lặp ID trong Database trước khi thêm.
+
+Vấn đề SQLite: Trong C++, mọi kết quả từ SQLite trả về thường là chuỗi. Cần hàm converter từ char* sang int, double.
+
+Bảo mật: Mặc dù không cần quản lý nhân viên, nhưng nên có một bước "Xác nhận xóa" (Confirm delete) để tránh mất dữ liệu do bấm nhầm.
